@@ -6,9 +6,10 @@ class DropBoxControlle{
         this.progressBar = document.querySelector('.mc-progress-bar-fg');
         this.filename = document.querySelector('.filename');
         this.timeLeft = document.querySelector('.timeleft');
+        this.fileList = document.querySelector('#list-of-files-and-directories');
         this.firebaseConect();
         this.initEvents();
-    
+        this.readFile();
 
     }
     //database reference 
@@ -144,6 +145,7 @@ class DropBoxControlle{
     }
     //Shows an icon for each file type
     iconView(file){
+       
         switch(file){
             case('folder'):
             return `<svg width="160" height="160" viewBox="0 0 160 160" class="mc-icon-template-content tile__preview tile__preview--icon">
@@ -158,7 +160,7 @@ class DropBoxControlle{
             case('image/gif'):
             case('image/png'):
             case('image/svg+xml'):
-            return `<svg version="1.1" id="Camada_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="160px" height="160px" viewBox="0 0 160 160" enable-background="new 0 0 160 160" xml:space="preserve">
+            return `<svg  version="1.1" id="Camada_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="160px" height="160px" viewBox="0 0 160 160" enable-background="new 0 0 160 160" xml:space="preserve">
             <filter height="102%" width="101.4%" id="mc-content-unknown-large-a" filterUnits="objectBoundingBox" y="-.5%" x="-.7%">
                 <feOffset result="shadowOffsetOuter1" in="SourceAlpha" dy="1"></feOffset>
                 <feColorMatrix values="0 0 0 0 0.858823529 0 0 0 0 0.870588235 0 0 0 0 0.88627451 0 0 0 1 0" in="shadowOffsetOuter1">
@@ -293,11 +295,84 @@ class DropBoxControlle{
     }
     //show file informations and icon
     getFileviw(file){
-        return ` <li>
-                        ${this.iconView(file)}
-       
-                    <div class="name text-center">${file.name}</div>
-                </li>`
+        let liItem = document.createElement('li');
+        liItem.addEventListener('click',(event)=>{
+            if(event.shiftKey){
+                let frist =  this.fileList.querySelector('.selected');
+                if(frist){
+                    let indexStart;
+                    let indexEnd;
+                   liItem.parentElement.childNodes.forEach((el,index)=>{
+
+                    if(frist === el) indexStart = index;
+                    if(liItem == el) indexEnd = index;
+
+                   })
+
+                   let index = [indexStart,indexEnd].sort();
+                   liItem.parentElement.childNodes
+                   .forEach((element,i)=>{
+                       if(i >=index[0]&& i <= index[1]){
+                           element.classList.add('selected');
+                       }
+                   });
+                   return true;
+                   
+
+                   
+                }
+            }
+
+            if(!event.ctrlKey){
+                this.fileList.querySelectorAll('li.selected')
+                .forEach(li => li.classList.remove('selected'));
+
+               
+            }
+
+            event.currentTarget.classList.toggle('selected');
+        })
+
+        liItem.innerHTML = ` <div>${this.iconView(file.type)}</div>
+        <div class="name text-center">${file.name}</div>`
+        return liItem;
+
+
     }
+    readFile(){
+
+        this.firebaseRef().on("value", (snapshot) =>{
+            this.fileList.innerHTML = '';
+          
+            snapshot.forEach(data => {
+               let file = data.val(); 
+               this.fileList.appendChild(this.getFileviw(file));
+             
+            })
+           
+            
+
+          },(errorObject) => console.log("The read failed: " + errorObject.code)
+          );
+
+
+        /*
+        this.firebaseRef().on("files", snapshot =>{
+            snapshot.forEach(snapshotItem =>{
+                let key = snapshot.key;
+                let data = snapshot.val();
+
+                console.log(key,data);
+            })
+        })
+        */
+    }
+    addEventLi(li){
+        li.addEventListener('click',(event)=>{
+            event.stopPropagation()
+            console.log(event.target)
+        })
+    }
+
 
 }
