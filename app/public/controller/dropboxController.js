@@ -1,5 +1,10 @@
+
 class DropBoxControlle{
     constructor(){
+        this.onselectionchange = new Event('onselectionchange');
+        this.btnRename = document.querySelector('#btn-rename');
+        this.btnFolder = document.querySelector('#btn-new-folder');
+        this.btnDelet = document.querySelector('#btn-delete');
         this.btnSendFile = document.querySelector('#btn-send-file');
         this.inputFile = document.querySelector('#files');
         this.snackModal = document.querySelector('#react-snackbar-root');
@@ -18,15 +23,80 @@ class DropBoxControlle{
         return firebase.database().ref("files");
     }
 
+    getSelection(){
+      let item =  this.fileList.querySelectorAll('.selected').length;
+      return item;
+     
+    }
+
     //events 
     initEvents(){
+
+        this.btnDelet.addEventListener('click',(event)=>{
+            this.removeTask()
+            .forEach(deleteReq => 
+                deleteReq.then(result => this.firebaseRef().child(result.key).remove())
+            )
+                
+
+        });
+
+        this.btnRename.addEventListener('click',(event)=>{
+            let file = JSON.parse(this.fileList.querySelector('.selected').dataset.file);
+
+
+            let fileKey = this.fileList.querySelector('.selected').dataset.key;
+
+            let newName = prompt("Renomear o Arquivo:",file.name)
+
+            if(newName){
+
+                file.name = newName;
+
+                console.log(file);
+
+                this.firebaseRef()
+                .child(fileKey)
+                .set(file)
+            }
+          
+            
+          
+        })
+
+        this.fileList.addEventListener('onselectionchange',(event)=>{
+            switch (this.getSelection()) {
+                case 0:
+              
+                    this.btnRename.style = "display:none";
+                    this.btnDelet.style = "display:none"
+                    
+                    break;
+                case 1:
+                   
+                    this.btnRename.style = "display:block";
+                    this.btnDelet.style = "display:block"
+                    break;
+                default:
+               
+                    this.btnRename.style = "display:none";
+                    this.btnDelet.style = "display:block"
+                    break;
+            }
+
+            
+          
+        })
+       
         this.btnSendFile.addEventListener('click',()=> this.inputFile.click());
     
         this.inputFile.addEventListener('change', (event) => {
             this.btnSendFile.disabled = true;
           
             this.uploadTask(event.target.files).forEach(element => element
-            .then(result =>{this.firebaseRef().push().set(result['input-file'])
+            .then(result =>{
+                this.firebaseRef().push().set(result['input-file']
+                )
             .catch(err =>{ console.log(err) 
                 uploadComplete();})
 
@@ -39,6 +109,7 @@ class DropBoxControlle{
         
 
     }
+  
     //Firebase conection
     firebaseConect(){
          // Your web app's Firebase configuration
@@ -58,7 +129,6 @@ class DropBoxControlle{
     uploadTask(files){
 
         let promises = [];
-
        
         [...files].forEach(element =>{
             promises.push(new Promise((resolve, reject)=>{
@@ -80,8 +150,7 @@ class DropBoxControlle{
 
                 ajax.upload.onprogress = event =>{
 
-                    this.uploadProgress(event,element);
-                    
+                    this.uploadProgress(event,element); 
                 }
 
                 ajax.onerror = event =>{
@@ -102,6 +171,58 @@ class DropBoxControlle{
 
         return Promise.all = (promises);
 
+    }
+
+    removeTask(){
+        let promises = [];
+
+        this.fileList.querySelectorAll('.selected')
+        .forEach(files =>{
+        
+        let fileJson = JSON.parse(files.dataset.file);
+        let path = fileJson.path;
+        let key  = files.dataset.key;
+
+        promises.push(new Promise((resolve,reject)=>{
+
+            let ajax = new XMLHttpRequest();
+            ajax.open("DELETE","/delete");
+
+            ajax.onload = event =>{
+            
+                this.modalShow(false);
+                try {
+                    resolve(JSON.parse(ajax.responseText));
+                } catch (error) {
+                    this.modalShow(false);
+                    reject(error);
+                    
+                }
+            }
+
+            ajax.upload.onprogress = event =>{
+
+              
+            }
+
+            ajax.onerror = event =>{
+                reject(event);
+            }
+
+            let formData = new FormData;
+
+            formData.append('path',path);
+            formData.append('key',key);
+
+            ajax.send(formData);
+
+
+        }));
+
+        
+        })
+
+        return Promise.all = (promises);
     }
 
     uploadComplete(){
@@ -294,11 +415,18 @@ class DropBoxControlle{
 
     }
     //show file informations and icon
-    getFileviw(file){
+    getFileviw(file,key){
         let liItem = document.createElement('li');
+
+        liItem.dataset.file = JSON.stringify(file);
+        liItem.dataset.key = key;
+
         liItem.addEventListener('click',(event)=>{
+
+        
             if(event.shiftKey){
                 let frist =  this.fileList.querySelector('.selected');
+                
                 if(frist){
                     let indexStart;
                     let indexEnd;
@@ -316,6 +444,9 @@ class DropBoxControlle{
                            element.classList.add('selected');
                        }
                    });
+
+                   this.fileList.dispatchEvent(this.onselectionchange);
+
                    return true;
                    
 
@@ -331,41 +462,31 @@ class DropBoxControlle{
             }
 
             event.currentTarget.classList.toggle('selected');
+            this.fileList.dispatchEvent(this.onselectionchange);
         })
 
         liItem.innerHTML = ` <div>${this.iconView(file.type)}</div>
-        <div class="name text-center">${file.name}</div>`
+        <div class="name text-center" id="fileName">${file.name}</div>`
         return liItem;
 
 
     }
+    //Show files give them a key on dataset
     readFile(){
 
         this.firebaseRef().on("value", (snapshot) =>{
             this.fileList.innerHTML = '';
-          
+            
             snapshot.forEach(data => {
+               let key = data.key;
+              
                let file = data.val(); 
-               this.fileList.appendChild(this.getFileviw(file));
+               this.fileList.appendChild(this.getFileviw(file,key));
              
             })
-           
-            
 
           },(errorObject) => console.log("The read failed: " + errorObject.code)
           );
-
-
-        /*
-        this.firebaseRef().on("files", snapshot =>{
-            snapshot.forEach(snapshotItem =>{
-                let key = snapshot.key;
-                let data = snapshot.val();
-
-                console.log(key,data);
-            })
-        })
-        */
     }
     addEventLi(li){
         li.addEventListener('click',(event)=>{
