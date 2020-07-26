@@ -49,13 +49,13 @@
                         <ul class="maestro-nav__features" data-reactid="21">
                             <li data-reactid="22">
                                 <h2 class="maestro-nav__features-header" data-reactid="23">
-                                    <a href="#" class="maestro-nav__features-header-link" data-reactid="24">Arquivos</a>
+                                    <a href="#" class="maestro-nav__features-header-link"  data-main data-reactid="24">Arquivos</a>
                                 </h2>
                             </li>
                             <li data-reactid="25">
                                 <div class="maestro-nav__feature-wrap" data-reactid="26">
                                     <span class="ue-effect-container uee-FeatureNav-myFiles" data-reactid="27">
-                                        <a href="#" class="maestro-nav__feature maestro-nav__active-feature" data-reactid="28">
+                                        <a href="#" data-main class="maestro-nav__feature maestro-nav__active-feature" data-reactid="28">
                                         Meus arquivos
                                         </a>
                                     </span>
@@ -130,17 +130,9 @@
                                 <span>
                                     <h1 class="ax-visually-hidden">Meus Arquivos</h1>
                                     <nav class="page-header-text u-l-fl" id="browse-location" aria-label="Hierarquia de pastas" role="navigation">
-                                        <span class="breadcrumb-segment__wrapper">
-                                            <span class="ue-effect-container uee-BreadCrumbSegment-link-0">
-                                                <a href="https://www.dropbox.com/work" class="breadcrumb-segment">Clone</a>
-                                            </span>
-                                            <svg width="24" height="24" viewBox="0 0 24 24" class="mc-icon-template-stateless" style="top: 4px; position: relative;">
-                                                <title>arrow-right</title>
-                                                <path d="M10.414 7.05l4.95 4.95-4.95 4.95L9 15.534 12.536 12 9 8.464z" fill="#637282"
-                                                    fill-rule="evenodd"></path>
-                                            </svg>
-                                        </span>
-                                        <span>Avell</span>
+                                        
+                                          
+                                      
                                     </nav>
                                 </span>
                             </span>
@@ -190,8 +182,8 @@
                             <button id="btn-send-file" type="button" class="btn btn-primary btn-block btn-sm">Enviar arquivos</button>
                             <input type="file" id="files" style="display:none;" multiple>
                             <button id="btn-new-folder" type="button" class="btn btn-link btn-block btn-sm btn-icon"><i class="ion-android-folder-open"></i>Nova Pasta</button>
-                            <button id="btn-rename" type="button" class="btn btn-link btn-block btn-sm btn-icon"><i class="ion-edit"></i>Renomear</button>
-                            <button id="btn-delete" type="button" class="btn btn-link btn-block btn-sm btn-icon"><i class="ion-trash-a"></i>Excluir</button>
+                            <button id="btn-rename" style="display:none;" type="button" class="btn btn-link btn-block btn-sm btn-icon"><i class="ion-edit"></i>Renomear</button>
+                            <button id="btn-delete"  style="display:none;"  type="button" class="btn btn-link btn-block btn-sm btn-icon"><i class="ion-trash-a"></i>Excluir</button>
                         </div>
                     </div>
                 </section>
