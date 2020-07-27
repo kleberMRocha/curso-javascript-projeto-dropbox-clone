@@ -1,6 +1,7 @@
 class DropBoxControlle{
     constructor(){
         this.currentFolder = ['raiz'];
+        this.archivesCountDisplay = document.querySelector('[data-count]');
         this.onselectionchange = new Event('onselectionchange');
         this.homeBtn = document.querySelectorAll('[data-main]');
         this.navLocation = document.querySelector('#browse-location');
@@ -16,8 +17,38 @@ class DropBoxControlle{
         this.fileList = document.querySelector('#list-of-files-and-directories');
         this.firebaseConect();
         this.initEvents();
-        this.openFolder()
+        this.openFolder();
+      
     }
+
+
+    archivesCount(){
+
+        this.archivesCountDisplay.innerHTML = '';
+
+        let info = document.createElement('span');
+
+        let archives = {"file":0,"folders":0}
+ 
+        this.firebaseRef().orderByChild('type').on("value", (snapshot) => {
+                snapshot.forEach(file =>{
+                    var username = file.val();
+                    if(username.type == 'folder'){
+                        archives.folders = archives.folders+=1;
+                    }else{
+                        archives.file = archives.file+=1;
+                    }
+                })
+         
+            info.innerHTML = `Arquivos:${archives.file} | Pastas:${archives.folders}` ;
+           
+
+           this.archivesCountDisplay.appendChild(info);
+   
+        });
+        
+    }
+
     //database reference 
     firebaseRef(path){
         if(!path) path = this.currentFolder.join('/');
@@ -447,6 +478,8 @@ class DropBoxControlle{
         this.readFile();
         this.navLocation.innerHTML = '';
         this.renderNav()
+        this.archivesCount();
+       
     }
 
     renderNav(){
