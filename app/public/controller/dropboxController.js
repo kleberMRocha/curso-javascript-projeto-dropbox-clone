@@ -1,7 +1,9 @@
-
 class DropBoxControlle{
     constructor(){
+        this.currentFolder = ['raiz'];
         this.onselectionchange = new Event('onselectionchange');
+        this.homeBtn = document.querySelectorAll('[data-main]');
+        this.navLocation = document.querySelector('#browse-location');
         this.btnRename = document.querySelector('#btn-rename');
         this.btnFolder = document.querySelector('#btn-new-folder');
         this.btnDelet = document.querySelector('#btn-delete');
@@ -14,13 +16,13 @@ class DropBoxControlle{
         this.fileList = document.querySelector('#list-of-files-and-directories');
         this.firebaseConect();
         this.initEvents();
-        this.readFile();
-
+        this.openFolder()
     }
     //database reference 
-    firebaseRef(){
+    firebaseRef(path){
+        if(!path) path = this.currentFolder.join('/');
         
-        return firebase.database().ref("files");
+        return firebase.database().ref(path);
     }
 
     getSelection(){
@@ -31,6 +33,30 @@ class DropBoxControlle{
 
     //events 
     initEvents(){
+        
+        this.homeBtn.forEach(link => link.addEventListener('click',event =>{
+            event.preventDefault();
+            this.currentFolder = ['raiz'];
+            this.openFolder();
+
+        })
+
+        )
+
+        this.btnFolder.addEventListener('click',(event) =>{
+            let folderName = prompt('Nome da Pasta');
+
+            if(folderName){
+                this.firebaseRef().push().set({
+                    name:folderName,
+                    type:'folder',
+                    path:this.currentFolder.join('/')
+
+                })
+
+                
+            }
+        })
 
         this.btnDelet.addEventListener('click',(event)=>{
             this.removeTask()
@@ -414,12 +440,78 @@ class DropBoxControlle{
         }
 
     }
+
+    openFolder(){
+        
+        if(this.lastFolder) this.firebaseRef(this.lastFolder).off('value')
+        this.readFile();
+        this.navLocation.innerHTML = '';
+        this.renderNav()
+    }
+
+    renderNav(){
+      
+    
+        let path = [];
+        
+        for(let i =0;i < this.currentFolder.length;i++){
+           
+            path.push(this.currentFolder[i]);
+            
+            let nav = document.createElement('nav');
+            nav.style = 'display:inline'
+            
+            let arrowEl = `<a href="" class="pathLink" data-path='${path.join('/')}' "> ${this.currentFolder[i]} </a>
+            <svg width="24" height="24" viewBox="0 0 24 24" class="mc-icon-template-stateless" style="top: 4px; position: relative;">
+            <title>arrow-right</title>
+            <path d="M10.414 7.05l4.95 4.95-4.95 4.95L9 15.534 12.536 12 9 8.464z" fill="#637282" fill-rule="evenodd"></path>
+            </svg>
+            `
+
+            nav.innerHTML = arrowEl;
+
+            this.navLocation.appendChild(nav);
+
+       
+        
+        }
+
+        let pathLinks = document.querySelectorAll('.pathLink');
+       
+        pathLinks.forEach(link => {
+            link.addEventListener('click',(event)=>{
+                event.preventDefault();
+                this.currentFolder = link.dataset.path.split('/');
+                this.openFolder();
+
+            })
+        })
+       
+
+        
+
+
+    }
     //show file informations and icon
     getFileviw(file,key){
         let liItem = document.createElement('li');
 
         liItem.dataset.file = JSON.stringify(file);
         liItem.dataset.key = key;
+
+        liItem.addEventListener('dblclick',(event)=>{
+
+            let file = JSON.parse(event.currentTarget.dataset.file);
+            if(file.type == 'folder'){
+                this.currentFolder.push(file.name);
+                this.openFolder();
+            }else{
+                console.log(file.path)
+                window.open(`/file?path=${file.path}`)
+            }
+
+        });
+
 
         liItem.addEventListener('click',(event)=>{
 
@@ -474,14 +566,19 @@ class DropBoxControlle{
     //Show files give them a key on dataset
     readFile(){
 
+        this.lastFolder = this.currentFolder.join('/');
+      
         this.firebaseRef().on("value", (snapshot) =>{
             this.fileList.innerHTML = '';
             
             snapshot.forEach(data => {
                let key = data.key;
-              
                let file = data.val(); 
-               this.fileList.appendChild(this.getFileviw(file,key));
+
+               if(file.type){
+                   this.fileList.appendChild(this.getFileviw(file,key));
+               }
+
              
             })
 
