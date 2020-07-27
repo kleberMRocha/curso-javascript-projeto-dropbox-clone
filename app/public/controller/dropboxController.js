@@ -1,6 +1,8 @@
 class DropBoxControlle{
     constructor(){
         this.currentFolder = ['raiz'];
+        this.searchBtn = document.querySelector('[data-searchB]');
+        this.searchInput = document.querySelector('[data-searchI]');
         this.archivesCountDisplay = document.querySelector('[data-count]');
         this.onselectionchange = new Event('onselectionchange');
         this.homeBtn = document.querySelectorAll('[data-main]');
@@ -21,49 +23,81 @@ class DropBoxControlle{
       
     }
 
-
-    archivesCount(){
-
-        this.archivesCountDisplay.innerHTML = '';
-
-        let info = document.createElement('span');
-
-        let archives = {"file":0,"folders":0}
- 
-        this.firebaseRef().orderByChild('type').on("value", (snapshot) => {
-                snapshot.forEach(file =>{
-                    var username = file.val();
-                    if(username.type == 'folder'){
-                        archives.folders = archives.folders+=1;
-                    }else{
-                        archives.file = archives.file+=1;
-                    }
-                })
-         
-            info.innerHTML = `Arquivos:${archives.file} | Pastas:${archives.folders}` ;
-           
-
-           this.archivesCountDisplay.appendChild(info);
-   
-        });
-        
-    }
-
-    //database reference 
-    firebaseRef(path){
-        if(!path) path = this.currentFolder.join('/');
-        
-        return firebase.database().ref(path);
-    }
-
-    getSelection(){
-      let item =  this.fileList.querySelectorAll('.selected').length;
-      return item;
-     
-    }
-
-    //events 
+     //events 
     initEvents(){
+
+        this.searchBtn.addEventListener('click',(event)=>{
+            event.preventDefault();
+          
+            let result = []
+
+            this.firebaseRef()
+            .orderByChild('name')
+            .startAt(`${this.searchInput.value}`)
+            .endAt(`${this.searchInput.value}`+"\uf8ff")
+            .on("value", (snapshot) => {
+          
+                snapshot.forEach(function(data) {
+                   
+
+                    let file = data.val();
+
+                    file.key = data.key
+            
+                    result.push(file);
+                    
+                });
+            });
+
+            if(result.length > 0){
+
+                this.fileList.innerHTML = '';
+
+                result.forEach(file =>{
+
+                    this.fileList.appendChild(this.getFileviw(file,file.key))
+                
+                })
+
+            }else{
+
+                this.firebaseRef()
+                .orderByChild('name')
+                .equalTo(`${this.searchInput.value}`)
+                .on("value", (snapshot) => {
+            
+                    snapshot.forEach(function(data) {
+                    
+                        let file = data.val();
+
+                        file.key = data.key
+                
+                        result.push(file);
+                        
+                    });
+                });
+
+                if(result.length > 0){
+
+                    this.fileList.innerHTML = '';
+
+                    result.forEach(file =>{
+
+                        this.fileList.appendChild(this.getFileviw(file,file.key))
+                    
+                     })
+
+                }else{
+                    alert('não encntrado');
+                }
+                    
+              
+            }
+
+
+         
+
+        })
         
         this.homeBtn.forEach(link => link.addEventListener('click',event =>{
             event.preventDefault();
@@ -166,7 +200,47 @@ class DropBoxControlle{
         
 
     }
-  
+
+    archivesCount(){
+
+        this.archivesCountDisplay.innerHTML = '';
+
+        let info = document.createElement('span');
+
+        let archives = {"file":0,"folders":0}
+ 
+        this.firebaseRef().orderByChild('type').on("value", (snapshot) => {
+                snapshot.forEach(file =>{
+                    var fileName = file.val();
+                    if(fileName.type == 'folder'){
+                        archives.folders = archives.folders+=1;
+                    }else{
+                        archives.file = archives.file+=1;
+                    }
+                })
+         
+            info.innerHTML = `Arquivos:${archives.file} | Pastas:${archives.folders}` ;
+           
+
+           this.archivesCountDisplay.appendChild(info);
+   
+        });
+        
+    }
+
+    //database reference 
+    firebaseRef(path){
+        if(!path) path = this.currentFolder.join('/');
+        
+        return firebase.database().ref(path);
+    }
+
+    getSelection(){
+      let item =  this.fileList.querySelectorAll('.selected').length;
+      return item;
+     
+    }
+
     //Firebase conection
     firebaseConect(){
          // Your web app's Firebase configuration
